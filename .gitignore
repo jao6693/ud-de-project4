@@ -128,5 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# Project related folders
+# Project related file & folders
+dl.cfg
 data
