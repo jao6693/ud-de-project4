@@ -24,14 +24,15 @@ config = configparser.ConfigParser()
 config.read('dl.cfg')
 
 # get access keys to connect to AWS
-os.environ['AWS_ACCESS_KEY_ID']=config['AWS']['AWS_ACCESS_KEY_ID']
-os.environ['AWS_SECRET_ACCESS_KEY']=config['AWS']['AWS_SECRET_ACCESS_KEY']
+os.environ['AWS_ACCESS_KEY_ID'] = config['AWS']['AWS_ACCESS_KEY_ID']
+os.environ['AWS_SECRET_ACCESS_KEY'] = config['AWS']['AWS_SECRET_ACCESS_KEY']
 
 # global variables for progress/failure tracking
 log_records = 0
 incorrect_log_records = 0
 song_records = 0
 incorrect_song_records = 0
+
 
 def create_spark_session():
     """ Conveniently create or get Spark session (if already exists) """
@@ -59,6 +60,7 @@ def add_records(record_type, cnt):
     if record_type == 'incorrect_song_records':
         incorrect_song_records += cnt
 
+
 def to_timestamp(ts):
     """ Return a date/time in UTC from a timestamp """
 
@@ -67,13 +69,13 @@ def to_timestamp(ts):
 
 def prepare_local_data():
     """ Unzip data into /tmp folder for further processing """
-    
+
     if config['PROJECT']['MODE'] == 'LOCAL':
         print("[data is extracted and persisted locally...]")
         # extract song data file
         with zipfile.ZipFile(SONG_DATA_ZIP, 'r') as zip_archive:
             zip_archive.extractall('tmp')
-    
+
         # extract log data file
         with zipfile.ZipFile(LOG_DATA_ZIP, 'r') as zip_archive:
             zip_archive.extractall('tmp/log_data')
@@ -141,7 +143,8 @@ def process_song_data(spark, input_data, output_data):
     # metrics from the dataset according to schema
     add_records('song_records', df.filter(df._corrupt_record.isNull()).count())
     print("# of song records: " + str(song_records))
-    add_records('incorrect_song_records', df.filter(df._corrupt_record.isNotNull()).count())
+    add_records('incorrect_song_records', df.filter(
+        df._corrupt_record.isNotNull()).count())
     print("# of incorrect song records: " + str(incorrect_song_records))
     # get correct entries
     df = df.filter(df._corrupt_record.isNull())
@@ -163,12 +166,12 @@ def process_song_data(spark, input_data, output_data):
         .parquet(output_data + '/songs-parquet/')
 
     # extract columns to create artists table
-    artists_table = df.select('artist_id', \
-                              col('artist_name').alias('name'), \
-                              col('artist_location').alias('location'), \
-                              col('artist_latitude').alias('latitude'), \
+    artists_table = df.select('artist_id',
+                              col('artist_name').alias('name'),
+                              col('artist_location').alias('location'),
+                              col('artist_latitude').alias('latitude'),
                               col('artist_longitude').alias('longitude')) \
-                      .dropDuplicates()
+        .dropDuplicates()
     #artists_table.show(10)
 
     # write artists table to parquet files
@@ -221,7 +224,8 @@ def process_log_data(spark, input_data, output_data):
     # metrics from the dataset according to schema
     add_records('log_records', df.filter(df._corrupt_record.isNull()).count())
     print("# of log records: " + str(log_records))
-    add_records('incorrect_log_records', df.filter(df._corrupt_record.isNotNull()).count())
+    add_records('incorrect_log_records', df.filter(
+        df._corrupt_record.isNotNull()).count())
     print("# of incorrect log records: " + str(incorrect_log_records))
     # get correct entries
     df = df.filter(df._corrupt_record.isNull())
@@ -232,12 +236,12 @@ def process_log_data(spark, input_data, output_data):
     df = df.filter(df.page == 'NextSong')
 
     # extract columns for users table
-    users_table = df.select(col('userId').alias('user_id'), \
-                            col('firstName').alias('first_name'), \
-                            col('lastName').alias('last_name'), \
-                            'gender', \
+    users_table = df.select(col('userId').alias('user_id'),
+                            col('firstName').alias('first_name'),
+                            col('lastName').alias('last_name'),
+                            'gender',
                             'level') \
-                    .dropDuplicates()
+        .dropDuplicates()
 
     #users_table.show(10)
 
@@ -255,13 +259,13 @@ def process_log_data(spark, input_data, output_data):
 
     # derive time table from timestamp
     time_table = df.select('start_time') \
-                        .withColumn('hour', hour(col('start_time'))) \
-                        .withColumn('day', dayofmonth(col('start_time'))) \
-                        .withColumn('week', weekofyear(col('start_time'))) \
-                        .withColumn('month', month(col('start_time'))) \
-                        .withColumn('year', year(col('start_time'))) \
-                        .withColumn('weekday', dayofweek(col('start_time'))) \
-                    .dropDuplicates()
+        .withColumn('hour', hour(col('start_time'))) \
+        .withColumn('day', dayofmonth(col('start_time'))) \
+        .withColumn('week', weekofyear(col('start_time'))) \
+        .withColumn('month', month(col('start_time'))) \
+        .withColumn('year', year(col('start_time'))) \
+        .withColumn('weekday', dayofweek(col('start_time'))) \
+        .dropDuplicates()
 
     #time_table.show(10)
 
@@ -279,55 +283,56 @@ def process_log_data(spark, input_data, output_data):
     artist_df = artist_df.select('artist_id', 'name') \
         .withColumnRenamed('artist_id', 'artist_id_dup')
     # join these 2 tables
-    song_df = song_df.join(artist_df, song_df.artist_id == artist_df.artist_id_dup)
+    song_df = song_df.join(artist_df, song_df.artist_id ==
+                           artist_df.artist_id_dup)
     # drop unnecessary columns
     song_df = song_df.drop('artist_id_dup')
     #song_df.show(10)
 
-    # extract columns from joined song and log datasets to create songplays table 
+    # extract columns from joined song and log datasets to create songplays table
     songplays_df = df.select('start_time',
-                           col('userId').alias('user_id'), \
-                           'level', \
-                           'song', \
-                           'artist', \
-                           col('sessionId').alias('session_id'), \
-                           'location', \
-                           col('userAgent').alias('user_agent')) \
-                     .dropDuplicates()
+                             col('userId').alias('user_id'),
+                             'level',
+                             'song',
+                             'artist',
+                             col('sessionId').alias('session_id'),
+                             'location',
+                             col('userAgent').alias('user_agent')) \
+        .dropDuplicates()
 
     #songplays_df.show(10)
     # https://spark.apache.org/docs/latest/api/python/pyspark.sql.html?highlight=join
-    songplays_join = songplays_df.join(song_df, \
-                        ((song_df.title == songplays_df.song) & \
-                        (song_df.name == songplays_df.artist)), \
-                        'inner')
+    songplays_join = songplays_df.join(song_df,
+                                       ((song_df.title == songplays_df.song) &
+                                        (song_df.name == songplays_df.artist)),
+                                       'inner')
     #https://towardsdatascience.com/adding-sequential-ids-to-a-spark-dataframe-fa0df5566ff6
     # discard unnecessary columns & add new ones for unique Id & partition
     songplays_table = songplays_join \
-                        .drop('song', 'artist') \
-                        .withColumn('songplay_id', monotonically_increasing_id()) \
-                        .withColumn('year', year(col('start_time'))) \
-                        .withColumn('month', month(col('start_time')))
+        .drop('song', 'artist') \
+        .withColumn('songplay_id', monotonically_increasing_id()) \
+        .withColumn('year', year(col('start_time'))) \
+        .withColumn('month', month(col('start_time')))
 
     #songplays_table.show(10)
 
     # write songplays table to parquet files partitioned by year and month
-    songplays_table.select( \
-                        'songplay_id', \
-                        'start_time', \
-                        'year', \
-                        'month', \
-                        'user_id', \
-                        'level', \
-                        'song_id', \
-                        'artist_id', \
-                        'session_id', \
-                        'location', \
-                        'user_agent') \
-                    .write \
-                    .mode('overwrite') \
-                    .partitionBy('year', 'month') \
-                    .parquet(output_data + '/songplay-parquet')
+    songplays_table.select(
+        'songplay_id',
+        'start_time',
+        'year',
+        'month',
+        'user_id',
+        'level',
+        'song_id',
+        'artist_id',
+        'session_id',
+        'location',
+        'user_agent') \
+        .write \
+        .mode('overwrite') \
+        .partitionBy('year', 'month') \
+        .parquet(output_data + '/songplay-parquet')
 
 
 def main():
@@ -353,7 +358,7 @@ def main():
     # process song data
     input_data, output_data = get_input_output(SONG)
     process_song_data(spark, input_data, output_data)
-    
+
     # process log data
     input_data, output_data = get_input_output(LOG)
     process_log_data(spark, input_data, output_data)
