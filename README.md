@@ -25,29 +25,31 @@ The main idea is to build a 3-step ETL process as follow :
 ## Design considerations
 
 The analytical model is designed the following way:  
-* one fact table called `songplays` containing facts (like level, location, user_agent, ...)
+* one fact table called `songplays` contains facts (like level, location, user_agent, ...)
 * four dimension tables called `users`, `songs`, `artists`, `time` contain additional information on songs, artists, users, ...
 
-These tables are connected according to the following schema:  
+These tables are connected according to the following <b>star schema</b>:  
 
 ![analytic model representation](https://github.com/jao6693/ud-de-project4/blob/master/img/analytic_model.png?raw=true)
 
-With this model analysts are able to easily query informations directly from tables or plus BI tools on top of it   
+With this model, analysts are able to easily query informations directly from tables or to use BI tools on top of it   
 
 ## Files & Configuration
 
 The following files are available within the project
-* dl.cfg:  
+* `dl.cfg`:  
 This file is used to set the configuration of the ETL process  
 In section `[AWS]`, set your own credentials in order to access AWS and interact with it
 In section `[PROJECT]`, set `MODE` to either `LOCAL` to work on data in your own workspace or `S3` to set input/output folders as `S3` buckets  
-* etl.py:
+
+* `etl.py`:  
 This file is used to retrieve log & song data, process them with Spark, and write output parquet files   
 
 ## Scripts
 
 Run the following commands in your terminal:  
-* `python etl.py`
-It will process the files (logs/songs) stored in a S3 bucket (raw data), populate first the staging tables and then the fact and dimension tables after data validation and transformation, and finally persist the tables in another S3 bucket
+* `python etl.py`  
+
+It will process the files (logs/songs) stored in a S3 bucket (raw data), populate first the staging tables and then the fact and dimension tables after data validation and transformation, and finally persist the tables in another S3 bucket  
 
 At the end of the process the <b>parquet files</b> can be requested for analysis purposes using BI tools
