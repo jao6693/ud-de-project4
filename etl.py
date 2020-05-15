@@ -7,6 +7,14 @@ from pyspark.sql.functions import udf, col, monotonically_increasing_id
 from pyspark.sql.functions import year, month, dayofmonth, dayofweek, weekofyear, hour, date_format
 from pyspark.sql.types import StructType, StructField, FloatType, DecimalType, DoubleType, StringType, IntegerType, DateType, TimestampType
 
+# get config file and parse it
+config = configparser.ConfigParser()
+config.read('dl.cfg')
+
+# get access keys to connect to AWS
+os.environ['AWS_ACCESS_KEY_ID'] = config['AWS']['AWS_ACCESS_KEY_ID']
+os.environ['AWS_SECRET_ACCESS_KEY'] = config['AWS']['AWS_SECRET_ACCESS_KEY']
+
 # constants
 SONG = 'song'
 LOG = 'log'
@@ -17,15 +25,7 @@ LOG_DATA_LOCAL = 'tmp/log_data/*.json'
 RETURN_PATH_LOCAL = 'result/'
 SONG_DATA_AWS = 's3a://udacity-dend/song_data/*/*/*/*.json'
 LOG_DATA_AWS = 's3a://udacity-dend/log_data/*/*/*.json'
-RETURN_PATH_AWS = 's3://udacity-dend-fbe'
-
-# get config file and parse it
-config = configparser.ConfigParser()
-config.read('dl.cfg')
-
-# get access keys to connect to AWS
-os.environ['AWS_ACCESS_KEY_ID'] = config['AWS']['AWS_ACCESS_KEY_ID']
-os.environ['AWS_SECRET_ACCESS_KEY'] = config['AWS']['AWS_SECRET_ACCESS_KEY']
+RETURN_PATH_AWS = config['AWS']['S3_BUCKET']
 
 # global variables for progress/failure tracking
 log_records = 0
@@ -306,7 +306,7 @@ def process_log_data(spark, input_data, output_data):
                                        ((song_df.title == songplays_df.song) &
                                         (song_df.name == songplays_df.artist)),
                                        'inner')
-    #https://towardsdatascience.com/adding-sequential-ids-to-a-spark-dataframe-fa0df5566ff6
+    # https://towardsdatascience.com/adding-sequential-ids-to-a-spark-dataframe-fa0df5566ff6
     # discard unnecessary columns & add new ones for unique Id & partition
     songplays_table = songplays_join \
         .drop('song', 'artist') \
@@ -317,6 +317,8 @@ def process_log_data(spark, input_data, output_data):
     #songplays_table.show(10)
 
     # write songplays table to parquet files partitioned by year and month
+    # as stated in this udacity knowledge post YEAR & MONTH should be added to the table for partitioning
+    # https://knowledge.udacity.com/questions/150979
     songplays_table.select(
         'songplay_id',
         'start_time',
