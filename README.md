@@ -1,4 +1,4 @@
-![Sparkify](https://github.com/jao6693/ud-de-project4/blob/master/sparkify_logo.png?raw=true)
+![Sparkify](https://github.com/jao6693/ud-de-project4/blob/master/img/sparkify_logo.png?raw=true)
 
 # Sparkify Analytics 
 
@@ -30,7 +30,7 @@ The analytical model is designed the following way:
 
 These tables are connected according to the following schema:  
 
-![analytic model representation](https://github.com/jao6693/ud-de-project4/blob/master/analytic_model.png?raw=true)
+![analytic model representation](https://github.com/jao6693/ud-de-project4/blob/master/img/analytic_model.png?raw=true)
 
 With this model analysts are able to easily query informations directly from tables or plus BI tools on top of it   
 
